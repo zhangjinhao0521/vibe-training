@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+from collections import Counter, defaultdict
 from datetime import date, datetime
 from pathlib import Path
 
@@ -172,11 +174,148 @@ def view_outfits(records: list[dict]) -> list[dict]:
     return matched
 
 
+def prompt_month() -> str:
+    current_month = date.today().strftime("%Y-%m")
+    while True:
+        value = input(
+            f"要总结的月份（YYYY-MM，回车默认 {current_month}）："
+        ).strip() or current_month
+        if re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", value):
+            return value
+        print("月份格式不正确，请输入例如 2026-09。")
+
+
+def next_month(month: str) -> str:
+    year, month_number = (int(part) for part in month.split("-"))
+    if month_number == 12:
+        return f"{year + 1:04d}-01"
+    return f"{year:04d}-{month_number + 1:02d}"
+
+
+def ranked_items(counter: Counter, limit: int = 3) -> list[tuple[str, int]]:
+    """按次数降序、名称升序返回稳定的排名。"""
+    return sorted(counter.items(), key=lambda item: (-item[1], item[0]))[:limit]
+
+
+def build_monthly_summary(records: list[dict], month: str) -> dict | None:
+    month_records = filter_records(records, "month", month)
+    if not month_records:
+        return None
+
+    counters = {
+        "style": Counter(str(record.get("style", "未记录")) for record in month_records),
+        "color": Counter(
+            str(color)
+            for record in month_records
+            for color in record.get("colors", [])
+        ),
+        "top": Counter(str(record.get("top", "未记录")) for record in month_records),
+        "bottom": Counter(str(record.get("bottom", "未记录")) for record in month_records),
+        "shoes": Counter(str(record.get("shoes", "未记录")) for record in month_records),
+        "occasion": Counter(
+            str(record.get("occasion", "未记录")) for record in month_records
+        ),
+    }
+    ratings = [int(record.get("rating", 0)) for record in month_records]
+
+    grouped: defaultdict[tuple, list[dict]] = defaultdict(list)
+    for record in month_records:
+        key = (
+            str(record.get("top", "未记录")),
+            str(record.get("bottom", "未记录")),
+            str(record.get("shoes", "未记录")),
+            tuple(str(color) for color in record.get("colors", [])),
+            str(record.get("style", "未记录")),
+            str(record.get("occasion", "未记录")),
+        )
+        grouped[key].append(record)
+
+    recommendations = []
+    for key, group in grouped.items():
+        average = sum(int(record.get("rating", 0)) for record in group) / len(group)
+        recommendations.append(
+            {
+                "top": key[0],
+                "bottom": key[1],
+                "shoes": key[2],
+                "colors": list(key[3]),
+                "style": key[4],
+                "occasion": key[5],
+                "average_rating": average,
+                "count": len(group),
+                "latest_date": max(str(record.get("date", "")) for record in group),
+            }
+        )
+    recommendations.sort(
+        key=lambda item: (
+            -item["average_rating"],
+            -item["count"],
+            item["top"],
+            item["bottom"],
+            item["shoes"],
+        )
+    )
+
+    return {
+        "month": month,
+        "next_month": next_month(month),
+        "count": len(month_records),
+        "average_rating": sum(ratings) / len(ratings),
+        "counters": counters,
+        "recommendations": recommendations[:3],
+    }
+
+
+def format_ranking(counter: Counter) -> str:
+    ranked = ranked_items(counter)
+    return "、".join(f"{name}（{count} 次）" for name, count in ranked) or "未记录"
+
+
+def print_monthly_summary(summary: dict) -> None:
+    print(f"\n--- {summary['month']} 月度穿搭总结 ---")
+    print(f"记录次数：{summary['count']} 次")
+    print(f"平均满意度：{summary['average_rating']:.1f}/5")
+    labels = {
+        "style": "常穿风格",
+        "color": "常用颜色",
+        "top": "常穿上装",
+        "bottom": "常穿下装",
+        "shoes": "常穿鞋履",
+        "occasion": "常见场合",
+    }
+    for key, label in labels.items():
+        print(f"{label}：{format_ranking(summary['counters'][key])}")
+
+    print(f"\n--- {summary['next_month']} 穿搭推荐 ---")
+    for index, item in enumerate(summary["recommendations"], start=1):
+        colors = "、".join(item["colors"]) or "未记录"
+        print(
+            f"{index}. {item['top']} + {item['bottom']} + {item['shoes']} "
+            f"| {colors} | {item['style']}"
+        )
+        print(
+            f"   适合：{item['occasion']}；依据：本月穿过 {item['count']} 次，"
+            f"平均满意度 {item['average_rating']:.1f}/5。"
+        )
+
+
+def show_monthly_summary(records: list[dict]) -> dict | None:
+    print("\n--- 月度偏好总结与下月推荐 ---")
+    month = prompt_month()
+    summary = build_monthly_summary(records, month)
+    if summary is None:
+        print("该月暂无穿搭记录，暂时无法总结和推荐。")
+        return None
+    print_monthly_summary(summary)
+    return summary
+
+
 def print_menu() -> None:
     print("\n=== 个人穿搭记账本 ===")
     print("1. 记录今日穿搭")
     print("2. 查看与筛选穿搭")
-    print("3. 退出")
+    print("3. 月度偏好总结与下月推荐")
+    print("4. 退出")
 
 
 def main() -> None:
@@ -189,10 +328,12 @@ def main() -> None:
         elif choice == "2":
             view_outfits(records)
         elif choice == "3":
+            show_monthly_summary(records)
+        elif choice == "4":
             print("已退出，明天见。")
             return
         else:
-            print("无效选项，请输入 1、2 或 3。")
+            print("无效选项，请输入 1~4。")
 
 
 if __name__ == "__main__":
