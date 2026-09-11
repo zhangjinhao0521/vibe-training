@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 from collections import Counter, defaultdict
 from datetime import date, datetime
 from pathlib import Path
@@ -15,6 +16,42 @@ DATA_FILE = Path(
 )
 
 
+def backup_invalid_data(path: Path) -> Path | None:
+    """在忽略异常数据前保留原文件，避免后续保存造成数据丢失。"""
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    backup_path = path.with_name(f"{path.stem}.invalid-{stamp}{path.suffix}")
+    try:
+        shutil.copy2(path, backup_path)
+    except OSError:
+        return None
+    return backup_path
+
+
+def is_valid_record(record: object) -> bool:
+    if not isinstance(record, dict):
+        return False
+    try:
+        date.fromisoformat(str(record.get("date", "")))
+    except ValueError:
+        return False
+
+    required_text = ("top", "bottom", "shoes", "style", "occasion")
+    if any(
+        not isinstance(record.get(field), str) or not record[field].strip()
+        for field in required_text
+    ):
+        return False
+    colors = record.get("colors")
+    if not isinstance(colors, list) or not colors:
+        return False
+    if any(not isinstance(color, str) or not color.strip() for color in colors):
+        return False
+    rating = record.get("rating")
+    if isinstance(rating, bool) or not isinstance(rating, int) or not 1 <= rating <= 5:
+        return False
+    return isinstance(record.get("note", ""), str)
+
+
 def load_records(path: Path = DATA_FILE) -> list[dict]:
     """读取已有穿搭记录；文件不存在时返回空列表。"""
     if not path.exists():
@@ -23,21 +60,43 @@ def load_records(path: Path = DATA_FILE) -> list[dict]:
     try:
         with path.open("r", encoding="utf-8") as file:
             data = json.load(file)
-    except (OSError, json.JSONDecodeError) as error:
-        print(f"读取数据失败：{error}。本次将从空记录开始。")
+    except OSError as error:
+        print(f"读取数据失败：{error}。请检查文件权限后重试。")
+        return []
+    except json.JSONDecodeError as error:
+        backup = backup_invalid_data(path)
+        backup_message = f"，原文件已备份为 {backup.name}" if backup else ""
+        print(f"数据文件不是有效的 JSON{backup_message}，本次从空记录开始。")
         return []
 
     if not isinstance(data, list):
-        print("数据文件格式不正确，本次将从空记录开始。")
+        backup = backup_invalid_data(path)
+        backup_message = f"，原文件已备份为 {backup.name}" if backup else ""
+        print(f"数据文件格式不正确{backup_message}，本次从空记录开始。")
         return []
-    return data
+
+    valid_records = [record for record in data if is_valid_record(record)]
+    invalid_count = len(data) - len(valid_records)
+    if invalid_count:
+        backup = backup_invalid_data(path)
+        backup_message = f"，原文件已备份为 {backup.name}" if backup else ""
+        print(f"已忽略 {invalid_count} 条格式异常的记录{backup_message}。")
+    return valid_records
 
 
 def save_records(records: list[dict], path: Path = DATA_FILE) -> None:
-    """以 UTF-8 JSON 格式保存全部记录。"""
+    """以 UTF-8 JSON 原子写入全部记录。"""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as file:
-        json.dump(records, file, ensure_ascii=False, indent=2)
+    temporary_path = path.with_suffix(f"{path.suffix}.tmp")
+    try:
+        with temporary_path.open("w", encoding="utf-8") as file:
+            json.dump(records, file, ensure_ascii=False, indent=2)
+            file.flush()
+            os.fsync(file.fileno())
+        temporary_path.replace(path)
+    finally:
+        if temporary_path.exists():
+            temporary_path.unlink()
 
 
 def prompt_required(label: str) -> str:
@@ -168,7 +227,14 @@ def view_outfits(records: list[dict]) -> list[dict]:
     field, prompt = options[choice]
     value = ""
     if field:
-        value = prompt_required(prompt)
+        if field == "month":
+            while True:
+                value = prompt_required(prompt)
+                if re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", value):
+                    break
+                print("月份格式不正确，请输入例如 2026-09。")
+        else:
+            value = prompt_required(prompt)
     matched = filter_records(records, field, value)
     print_records(matched)
     return matched
@@ -310,12 +376,59 @@ def show_monthly_summary(records: list[dict]) -> dict | None:
     return summary
 
 
+def delete_outfit(records: list[dict], path: Path = DATA_FILE) -> bool:
+    print("\n--- 删除穿搭记录 ---")
+    if not records:
+        print("还没有穿搭记录，无需删除。")
+        return False
+
+    ordered_records = filter_records(records)
+    print_records(ordered_records)
+    while True:
+        value = input("请输入要删除的编号（直接回车取消）：").strip()
+        if not value:
+            print("已取消删除。")
+            return False
+        try:
+            selected = int(value)
+        except ValueError:
+            print("编号必须是整数，请重新输入。")
+            continue
+        if 1 <= selected <= len(ordered_records):
+            break
+        print(f"编号超出范围，请输入 1~{len(ordered_records)}。")
+
+    target = ordered_records[selected - 1]
+    print(
+        f"将删除：{target.get('date', '日期未知')} | "
+        f"{target.get('top', '未记录')} + {target.get('bottom', '未记录')} + "
+        f"{target.get('shoes', '未记录')}"
+    )
+    while True:
+        confirmation = input("确认删除？(y/n)：").strip().casefold()
+        if confirmation in {"n", "no", "否", ""}:
+            print("已取消删除，记录仍然保留。")
+            return False
+        if confirmation in {"y", "yes", "是"}:
+            break
+        print("请输入 y 或 n。")
+
+    original_index = next(
+        index for index, record in enumerate(records) if record is target
+    )
+    records.pop(original_index)
+    save_records(records, path)
+    print("记录已删除。")
+    return True
+
+
 def print_menu() -> None:
     print("\n=== 个人穿搭记账本 ===")
     print("1. 记录今日穿搭")
     print("2. 查看与筛选穿搭")
     print("3. 月度偏好总结与下月推荐")
-    print("4. 退出")
+    print("4. 删除穿搭记录")
+    print("5. 退出")
 
 
 def main() -> None:
@@ -330,10 +443,12 @@ def main() -> None:
         elif choice == "3":
             show_monthly_summary(records)
         elif choice == "4":
+            delete_outfit(records)
+        elif choice == "5":
             print("已退出，明天见。")
             return
         else:
-            print("无效选项，请输入 1~4。")
+            print("无效选项，请输入 1~5。")
 
 
 if __name__ == "__main__":
