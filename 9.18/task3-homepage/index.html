@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="章锦浩的个人主页，展示教育背景、项目经历、技能与联系方式。">
+  <title>章锦浩｜个人主页</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <header class="site-header" id="top">
+    <nav class="nav-shell" aria-label="主导航">
+      <a class="brand" href="#home" aria-label="返回首页">
+        <span class="brand-mark" aria-hidden="true">章</span>
+        <span>章锦浩</span>
+      </a>
+
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+        <span class="sr-only">打开导航菜单</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <div class="nav-links" id="primary-nav">
+        <a href="#home">首页</a>
+        <a href="#education">教育背景</a>
+        <a href="#projects">项目经历</a>
+        <a href="#skills">技能</a>
+        <a href="#contact">联系我</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="home" aria-labelledby="hero-title">
+      <div class="section-shell hero-layout">
+        <div class="hero-copy">
+          <p class="eyebrow">2026 届本科毕业生 · 求职中</p>
+          <h1 id="hero-title">你好，我是<br><span>章锦浩</span></h1>
+          <p class="hero-intro">应届本科生，关注 Web 与游戏开发，也具备图像处理、视频剪辑和数据库基础。</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#projects">查看项目 <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="#contact">联系我 <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+
+        <div class="portrait-wrap" aria-label="头像占位区域">
+          <div class="portrait-ring" aria-hidden="true"></div>
+          <div class="portrait-placeholder" role="img" aria-label="个人头像占位">
+            <span>个人头像</span>
+            <small>PHOTO</small>
+          </div>
+          <p class="portrait-note"><span></span> OPEN TO WORK</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="education section-block" id="education" aria-labelledby="education-title">
+      <div class="section-shell">
+        <div class="section-heading">
+          <p class="section-index">01 / EDUCATION</p>
+          <h2 id="education-title">教育背景</h2>
+          <p>本科阶段学习经历。</p>
+        </div>
+
+        <article class="education-row">
+          <div class="education-time">本科</div>
+          <div class="education-main">
+            <h3>金陵科技学院</h3>
+            <p>应届本科生</p>
+          </div>
+          <div class="education-detail">
+            <p>学习方向涵盖 Web 开发、数据库、数字媒体制作与游戏开发。</p>
+            <p>注重实践，通过网页和小游戏项目持续积累开发经验。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="projects section-block" id="projects" aria-labelledby="projects-title">
+      <div class="section-shell">
+        <div class="section-heading heading-row">
+          <div>
+            <p class="section-index">02 / SELECTED WORK</p>
+            <h2 id="projects-title">项目经历</h2>
+          </div>
+          <p>三个代表性项目，展示问题、方案与结果。</p>
+        </div>
+
+        <div class="project-grid">
+          <article class="project-card project-card-green">
+            <div class="project-number">01</div>
+            <div>
+              <p class="project-type">Web 开发</p>
+              <h3>安徽宏村旅游网页</h3>
+              <p class="project-description">以安徽宏村为主题制作旅游网页，展示当地景点、文化与旅行信息。</p>
+              <ul class="tech-list" aria-label="项目技术栈">
+                <li>HTML</li><li>CSS</li><li>JavaScript</li><li>Dreamweaver</li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="project-card project-card-coral">
+            <div class="project-number">02</div>
+            <div>
+              <p class="project-type">游戏开发</p>
+              <h3>Godot 引擎游戏开发</h3>
+              <p class="project-description">使用 Godot 游戏引擎完成小游戏开发实践，熟悉场景、节点与基础交互逻辑。</p>
+              <ul class="tech-list" aria-label="项目技术栈">
+                <li>Godot</li><li>游戏逻辑</li><li>场景设计</li>
+              </ul>
+            </div>
+          </article>
+
+          <article class="project-card project-card-blue">
+            <div class="project-number">03</div>
+            <div>
+              <p class="project-type">个人练习</p>
+              <h3>小游戏练习合集</h3>
+              <p class="project-description">独立练习并制作多个小游戏项目，在实践中积累游戏机制与交互开发经验。</p>
+              <ul class="tech-list" aria-label="项目技术栈">
+                <li>Godot</li><li>独立开发</li><li>交互设计</li>
+              </ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="skills section-block" id="skills" aria-labelledby="skills-title">
+      <div class="section-shell skills-layout">
+        <div class="section-heading">
+          <p class="section-index">03 / SKILLS</p>
+          <h2 id="skills-title">技能</h2>
+          <p>持续学习，也重视把基础能力用扎实。</p>
+        </div>
+
+        <div class="skill-list" aria-label="技能列表">
+          <article class="skill-item">
+            <span class="skill-number">01</span>
+            <div>
+              <h3>图像与视频制作</h3>
+              <p>熟悉 Adobe Photoshop、Premiere Pro 及剪映，具备基础的图像处理、视频剪辑与后期制作能力。</p>
+              <ul class="tech-list"><li>Photoshop</li><li>Premiere Pro</li><li>剪映</li></ul>
+            </div>
+          </article>
+          <article class="skill-item">
+            <span class="skill-number">02</span>
+            <div>
+              <h3>Web 开发</h3>
+              <p>具备 JavaScript、Java Web 及 Java EE 基础，能够使用 Dreamweaver、Visual Studio Code 进行项目开发。</p>
+              <ul class="tech-list"><li>JavaScript</li><li>Java Web</li><li>Java EE</li><li>VS Code</li></ul>
+            </div>
+          </article>
+          <article class="skill-item">
+            <span class="skill-number">03</span>
+            <div>
+              <h3>数据库</h3>
+              <p>掌握 SQL 基础语法，具备数据库查询、数据管理及基础操作能力。</p>
+              <ul class="tech-list"><li>SQL</li><li>数据查询</li><li>数据管理</li></ul>
+            </div>
+          </article>
+          <article class="skill-item">
+            <span class="skill-number">04</span>
+            <div>
+              <h3>游戏开发</h3>
+              <p>熟悉 Godot 游戏引擎的基本操作，具有小游戏开发实践经验，曾独立练习并制作多个小游戏项目。</p>
+              <ul class="tech-list"><li>Godot</li><li>小游戏开发</li><li>独立实践</li></ul>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="section-shell contact-inner">
+        <div>
+          <p class="section-index contact-index">04 / CONTACT</p>
+          <h2 id="contact-title">期待与你<br>聊聊新的可能。</h2>
+        </div>
+
+        <div class="contact-links">
+          <a href="mailto:2429828167@qq.com">
+            <span>EMAIL</span><strong>2429828167@qq.com</strong><i aria-hidden="true">↗</i>
+          </a>
+          <a href="https://gitee.com/zhajinhua6" target="_blank" rel="noopener noreferrer">
+            <span>GITEE</span><strong>gitee.com/zhajinhua6</strong><i aria-hidden="true">↗</i>
+          </a>
+        </div>
+      </div>
+
+      <footer class="site-footer section-shell">
+        <div class="footer-meta">
+          <p>© <span id="current-year">2026</span> 章锦浩</p>
+          <p>本页由 AI 辅助开发 · 2026</p>
+        </div>
+        <a href="#top">返回顶部 <span aria-hidden="true">↑</span></a>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
